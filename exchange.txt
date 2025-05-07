@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+
+import time
+import random
+import socket
+import socks
+import requests
+import sys
+
+# List of sample SOCKS5 proxies (replace or expand as needed)
+PROXIES = [
+    ("51.83.140.48", 1080),
+    ("51.68.172.7", 1080),
+    ("38.7.222.204", 9999),
+    ("38.7.223.198", 9999),
+]
+
+IP_SERVICES = [
+    "https://api.ipify.org",
+    "https://icanhazip.com",
+    "https://ifconfig.me/ip"
+]
+
+def get_public_ip():
+    for url in IP_SERVICES:
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                return response.text.strip()
+        except:
+            continue
+    return "Unavailable"
+
+def set_socks_proxy(host, port):
+    socks.set_default_proxy(socks.SOCKS5, host, port)
+    socket.socket = socks.socksocket
+
+def reset_socket():
+    socket.socket = socket._socketobject if hasattr(socket, "_socketobject") else socket.socket
+
+def change_ip():
+    proxy = random.choice(PROXIES)
+    print(f"\n[*] Changing IP using proxy: {proxy[0]}:{proxy[1]}")
+    try:
+        set_socks_proxy(proxy[0], proxy[1])
+        current_ip = get_public_ip()
+        print(f"[+] New public IP: {current_ip}")
+    except Exception as e:
+        print(f"[!] Failed to change IP: {e}")
+        reset_socket()
+
+def main():
+    print("=====================================")
+    print("         🔐 IP PROTECTOR TOOL        ")
+    print("=====================================")
+    protected_ip = input("Enter IP to protect (your real IP): ").strip()
+    print(f"[*] Monitoring protection for IP: {protected_ip}")
+
+    try:
+        while True:
+            change_ip()
+            print("[*] Sleeping 30 seconds...\n")
+            time.sleep(30)
+    except KeyboardInterrupt:
+        print("\n[!] Stopped by user. Resetting socket.")
+        reset_socket()
+        sys.exit(0)
+
+if __name__ == "__main__":
+    main()
